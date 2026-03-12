@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Math Quiz Game</title>
+
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: "Poppins", Arial, sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      color: #333;
+    }
+
+    .container {
+      text-align: center;
+      background: white;
+      padding: 50px 70px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      font-size: 22px;
+      animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 45px;
+      margin-bottom: 25px;
+      color: #6a11cb;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    button {
+      padding: 15px 40px;
+      font-size: 24px;
+      cursor: pointer;
+      margin-top: 20px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #6a11cb, #b92bff);
+      color: white;
+      font-weight: bold;
+      transition: 0.25s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+
+    #problem {
+      font-size: 34px;
+      margin-top: 25px;
+      font-weight: bold;
+      color: #333;
+      min-height: 40px;
+      transition: opacity 0.3s ease;
+    }
+
+    input {
+      font-size: 24px;
+      padding: 12px;
+      width: 220px;
+      margin-top: 20px;
+      border-radius: 10px;
+      border: 2px solid #6a11cb;
+      outline: none;
+      transition: 0.25s ease;
+    }
+
+    input:focus {
+      border-color: #b92bff;
+      box-shadow: 0 0 8px rgba(185,43,255,0.5);
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 26px;
+      font-weight: bold;
+      min-height: 35px;
+    }
+
+    #score, #highscore {
+      margin-top: 15px;
+      font-size: 28px;
+      font-weight: 600;
+      color: #444;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Math Quiz Game</h1>
+
+    <button id="easy-btn">Easy</button>
+    <button id="hard-btn">Hard</button>
+
+    <p id="problem"></p>
+
+    <input id="answer" type="text" placeholder="Your answer" style="display:none;" />
+    <button id="submit-answer" style="display:none;">Submit</button>
+
+    <button id="return-btn" style="display:none; background:#444;">Return</button>
+
+    <p id="result"></p>
+    <p id="score">Score: 0</p>
+    <p id="highscore">High Score: 0</p>
+  </div>
+
+  <script>
+    let score = 0;
+    let currentAnswer = null;
+    let mode = "easy";
+
+    let highScoreEasy = Number(localStorage.getItem("highScoreEasy")) || 0;
+    let highScoreHard = Number(localStorage.getItem("highScoreHard")) || 0;
+
+    const easyBtn = document.getElementById("easy-btn");
+    const hardBtn = document.getElementById("hard-btn");
+    const problemText = document.getElementById("problem");
+    const resultText = document.getElementById("result");
+    const scoreText = document.getElementById("score");
+    const highScoreText = document.getElementById("highscore");
+    const answerBox = document.getElementById("answer");
+    const submitBtn = document.getElementById("submit-answer");
+    const returnBtn = document.getElementById("return-btn");
+
+    function updateHighScoreDisplay() {
+      highScoreText.textContent =
+        mode === "easy"
+          ? `High Score: ${highScoreEasy}`
+          : `High Score: ${highScoreHard}`;
+    }
+
+    updateHighScoreDisplay();
+
+    // EASY MODE
+    function generateEasyProblem() {
+      const a = Math.floor(Math.random() * 12) + 1;
+      const b = Math.floor(Math.random() * 12) + 1;
+      const ops = ["+", "-", "*", "/"];
+      const op = ops[Math.floor(Math.random() * ops.length)];
+
+      if (op === "/") {
+        const raw = a / b;
+        const rounded = Number(raw.toFixed(2));
+        if (Math.abs(raw - rounded) > 0.0001) return generateEasyProblem();
+        return { text: `${a} / ${b} = ?`, answer: rounded };
+      }
+
+      let answer;
+      if (op === "+") answer = a + b;
+      else if (op === "-") answer = a - b;
+      else if (op === "*") answer = a * b;
+
+      return { text: `${a} ${op} ${b} = ?`, answer: answer };
+    }
+
+    // HARD MODE
+    function generateHardProblem() {
+      const ops = ["+", "-", "*", "/"];
+
+      const randRange = Math.random() < 0.5;
+
+      const a = randRange
+        ? Math.floor(Math.random() * 12) + 1
+        : Math.floor(Math.random() * 41) + 10;
+
+      const b = randRange
+        ? Math.floor(Math.random() * 12) + 1
+        : Math.floor(Math.random() * 41) + 10;
+
+      const c = randRange
+        ? Math.floor(Math.random() * 12) + 1
+        : Math.floor(Math.random() * 41) + 10;
+
+      const op1 = ops[Math.floor(Math.random() * ops.length)];
+      const op2 = ops[Math.floor(Math.random() * ops.length)];
+
+      const useParens = Math.random() < 0.5;
+
+      let expression;
+
+      if (useParens) {
+        expression = `(${a} ${op1} ${b}) ${op2} ${c}`;
+      } else {
+        expression = `${a} ${op1} ${b} ${op2} ${c}`;
+      }
+
+      let result = eval(expression);
+
+      const rounded = Number(result.toFixed(2));
+      if (Math.abs(result - rounded) > 0.0001) return generateHardProblem();
+
+      return { text: `${expression} = ?`, answer: rounded };
+    }
+
+    function startGame(selectedMode) {
+      mode = selectedMode;
+      score = 0;
+      scoreText.textContent = `Score: ${score}`;
+      resultText.textContent = "";
+
+      easyBtn.style.display = "none";
+      hardBtn.style.display = "none";
+      answerBox.style.display = "inline-block";
+      submitBtn.style.display = "inline-block";
+      returnBtn.style.display = "inline-block";
+
+      updateHighScoreDisplay();
+      nextProblem();
+    }
+
+    function nextProblem() {
+      const p = mode === "easy" ? generateEasyProblem() : generateHardProblem();
+      currentAnswer = p.answer;
+
+      problemText.style.opacity = 0;
+      setTimeout(() => {
+        problemText.textContent = p.text;
+        problemText.style.opacity = 1;
+      }, 150);
+
+      answerBox.value = "";
+      resultText.textContent = "";
+    }
+
+    function returnToMenu() {
+      answerBox.style.display = "none";
+      submitBtn.style.display = "none";
+      returnBtn.style.display = "none";
+
+      easyBtn.style.display = "inline-block";
+      hardBtn.style.display = "inline-block";
+
+      problemText.textContent = "";
+      resultText.textContent = "";
+      scoreText.textContent = "Score: 0";
+    }
+
+    function checkAnswer() {
+      const userInput = answerBox.value.trim();
+      if (userInput === "") {
+        resultText.textContent = "Enter a number!";
+        resultText.style.color = "#ff5e62";
+        return;
+      }
+
+      const userValue = parseFloat(userInput);
+      if (isNaN(userValue)) {
+        resultText.textContent = "Invalid number.";
+        resultText.style.color = "#ff5e62";
+        return;
+      }
+
+      if (Math.abs(userValue - currentAnswer) < 0.01) {
+        score++;
+        resultText.textContent = "Correct!";
+        resultText.style.color = "green";
+        scoreText.textContent = `Score: ${score}`;
+
+        if (mode === "easy") {
+          if (score > highScoreEasy) {
+            highScoreEasy = score;
+            localStorage.setItem("highScoreEasy", highScoreEasy);
+          }
+        } else {
+          if (score > highScoreHard) {
+            highScoreHard = score;
+            localStorage.setItem("highScoreHard", highScoreHard);
+          }
+        }
+
+        updateHighScoreDisplay();
+        setTimeout(nextProblem, 500);
+
+      } else {
+        resultText.textContent = `Wrong! Correct answer was ${currentAnswer}`;
+        resultText.style.color = "#ff5e62";
+        problemText.textContent = "Game Over";
+
+        answerBox.style.display = "none";
+        submitBtn.style.display = "none";
+        returnBtn.style.display = "none";
+
+        easyBtn.style.display = "inline-block";
+        hardBtn.style.display = "inline-block";
+      }
+    }
+
+    easyBtn.addEventListener("click", () => startGame("easy"));
+    hardBtn.addEventListener("click", () => startGame("hard"));
+    submitBtn.addEventListener("click", checkAnswer);
+    returnBtn.addEventListener("click", returnToMenu);
+    answerBox.addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    checkAnswer();
+  }
+});
+  </script>
+
+</body>
+</html>
